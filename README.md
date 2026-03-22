@@ -6,9 +6,12 @@
 
 ![Python](https://img.shields.io/badge/Python-3.11-blue?style=for-the-badge&logo=python)
 ![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?style=for-the-badge&logo=docker)
+![Docker Compose](https://img.shields.io/badge/Docker_Compose-Multi--Service-2496ED?style=for-the-badge&logo=docker)
 ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-CI/CD-2088FF?style=for-the-badge&logo=githubactions)
 ![AWS EC2](https://img.shields.io/badge/AWS-EC2-FF9900?style=for-the-badge&logo=amazonaws)
 ![DockerHub](https://img.shields.io/badge/DockerHub-Registry-2496ED?style=for-the-badge&logo=docker)
+![Prometheus](https://img.shields.io/badge/Prometheus-Metrics-E6522C?style=for-the-badge&logo=prometheus)
+![Grafana](https://img.shields.io/badge/Grafana-Dashboard-F46800?style=for-the-badge&logo=grafana)
 
 </div>
 
@@ -16,12 +19,12 @@
 
 ## 📌 What is OpenClaw?
 
-**OpenClaw** is a self-healing Docker container monitoring tool built with Python.  
+**OpenClaw** is a self-healing Docker container monitoring tool built with Python.
 It watches your Docker containers 24/7 and automatically restarts them if they stop unexpectedly.
 
-It also logs every event, sends real-time alerts to Slack or Telegram, and is secured with a full **DevSecOps CI/CD pipeline** powered by GitHub Actions.
+It also logs every event, sends real-time alerts to Slack or Telegram, visualizes metrics using **Prometheus and Grafana**, and is secured with a full **DevSecOps CI/CD pipeline** powered by GitHub Actions.
 
-> Built as a hands-on DevOps learning project covering monitoring, automation, logging, alerting, and security pipelines.
+> Built as a hands-on DevOps learning project covering monitoring, automation, logging, alerting, metrics visualization, and security pipelines.
 
 ---
 
@@ -32,6 +35,7 @@ It also logs every event, sends real-time alerts to Slack or Telegram, and is se
 - ✅ Log all events with timestamps
 - ✅ Support multiple containers via a config file
 - ✅ Send real-time alerts via Slack / Telegram
+- ✅ Visualize container metrics using Prometheus and Grafana
 - ✅ Secure automated CI/CD pipeline with DevSecOps best practices
 
 ---
@@ -53,11 +57,21 @@ GitHub Actions Pipeline
                 |
                 ▼
          AWS EC2 Server
-         └── OpenClaw Container (running)
-               ├── Watches Docker containers
-               ├── Auto-restarts crashed ones
-               ├── Writes logs
-               └── Sends Slack / Telegram alerts
+         └── Docker Compose
+               ├── OpenClaw Container
+               │     ├── Watches Docker containers
+               │     ├── Auto-restarts crashed ones
+               │     ├── Writes logs
+               │     ├── Exposes metrics
+               │     └── Sends Slack / Telegram alerts
+               │
+               ├── Prometheus Container
+               │     └── Scrapes and stores metrics
+               │         from OpenClaw
+               │
+               └── Grafana Container
+                     └── Visualizes metrics on
+                         a live dashboard
 ```
 
 ---
@@ -87,15 +101,34 @@ pipeline.yml  ← Master Workflow
 
 ---
 
+## 🐳 Docker Compose Services
+```
+docker-compose.yml
+├── openclaw       ← Core monitoring + self-healing tool
+├── prometheus     ← Scrapes and stores metrics from OpenClaw
+└── grafana        ← Visualizes metrics on a live dashboard
+```
+
+| Service | Purpose | Port |
+|---|---|---|
+| `openclaw` | Monitors containers, auto-restarts, sends alerts | - |
+| `prometheus` | Collects and stores OpenClaw metrics | 9090 |
+| `grafana` | Live dashboard for container health metrics | 3000 |
+
+---
+
 ## 📁 Project Structure
 ```
 openclaw/
 ├── README.md                          ← Project documentation
 ├── monitor.py                         ← Core monitoring script
+├── alerts.py                          ← Slack / Telegram alerts
 ├── requirements.txt                   ← Python dependencies
-├── Dockerfile                         ← OpenClaw container definition
+├── Dockerfile                         ← Single stage Dockerfile
+├── docker-compose.yml                 ← OpenClaw + Prometheus + Grafana
 ├── config.yaml                        ← Containers to monitor (Phase 4)
 ├── .gitignore                         ← Git ignore rules
+├── logs/                              ← Container event logs
 └── .github/
     └── workflows/
         ├── pipeline.yml               ← Master pipeline (calls all workflows)
@@ -158,6 +191,7 @@ openclaw/
 ### 🔵 Phase 6 — DevSecOps CI/CD Pipeline
 - Full GitHub Actions pipeline with a master workflow calling reusable workflows
 - Each security/lint/build/deploy stage is in its own workflow file
+- Docker Compose deploys all 3 services (OpenClaw + Prometheus + Grafana) to EC2
 
 | Stage | Tool | Purpose |
 |---|---|---|
@@ -178,6 +212,9 @@ openclaw/
 |---|---|
 | Language | Python 3.11 |
 | Containerization | Docker & Docker Desktop |
+| Container Orchestration | Docker Compose |
+| Metrics Collection | Prometheus |
+| Metrics Visualization | Grafana |
 | Cloud | AWS EC2 |
 | Image Registry | DockerHub |
 | CI/CD | GitHub Actions |
@@ -193,8 +230,8 @@ openclaw/
 
 ## 👤 Author
 
-**Aniruddha Kharve**  
-DevOps Engineer in Progress 🚀  
+**Aniruddha Kharve**
+DevOps Engineer in Progress 🚀
 GitHub: [@Aniruddhakharve](https://github.com/Aniruddhakharve)
 
 ---
@@ -202,7 +239,3 @@ GitHub: [@Aniruddhakharve](https://github.com/Aniruddhakharve)
 <div align="center">
 Built with 🦞 and a lot of DevOps love
 </div>
-```
-
----
-
