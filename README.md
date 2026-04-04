@@ -12,6 +12,7 @@
 ![DockerHub](https://img.shields.io/badge/DockerHub-Registry-2496ED?style=for-the-badge&logo=docker)
 ![Prometheus](https://img.shields.io/badge/Prometheus-Metrics-E6522C?style=for-the-badge&logo=prometheus)
 ![Grafana](https://img.shields.io/badge/Grafana-Dashboard-F46800?style=for-the-badge&logo=grafana)
+![Terraform](https://img.shields.io/badge/Terraform-IaC-7B42BC?style=for-the-badge&logo=terraform)
 
 </div>
 
@@ -22,9 +23,9 @@
 **OpenClaw** is a self-healing Docker container monitoring tool built with Python.
 It watches your Docker containers 24/7 and automatically restarts them if they stop unexpectedly.
 
-It also logs every event, sends real-time alerts to Slack or Telegram, visualizes metrics using **Prometheus and Grafana**, and is secured with a full **DevSecOps CI/CD pipeline** powered by GitHub Actions.
+It also logs every event, sends real-time alerts to Slack or Telegram, visualizes metrics using **Prometheus and Grafana**, is secured with a full **DevSecOps CI/CD pipeline** powered by GitHub Actions, and provisions AWS infrastructure using **Terraform Modules**.
 
-> Built as a hands-on DevOps learning project covering monitoring, automation, logging, alerting, metrics visualization, and security pipelines.
+> Built as a hands-on DevOps learning project covering monitoring, automation, logging, alerting, metrics visualization, security pipelines, and Infrastructure as Code.
 
 ---
 
@@ -37,6 +38,7 @@ It also logs every event, sends real-time alerts to Slack or Telegram, visualize
 - ✅ Send real-time alerts via Slack / Telegram
 - ✅ Visualize container metrics using Prometheus and Grafana
 - ✅ Secure automated CI/CD pipeline with DevSecOps best practices
+- ✅ Provision AWS infrastructure using Terraform Modules (IaC)
 
 ---
 
@@ -57,21 +59,22 @@ GitHub Actions Pipeline
                 |
                 ▼
          AWS EC2 Server
-         └── Docker Compose
-               ├── OpenClaw Container
-               │     ├── Watches Docker containers
-               │     ├── Auto-restarts crashed ones
-               │     ├── Writes logs
-               │     ├── Exposes metrics
-               │     └── Sends Slack / Telegram alerts
-               │
-               ├── Prometheus Container
-               │     └── Scrapes and stores metrics
-               │         from OpenClaw
-               │
-               └── Grafana Container
-                     └── Visualizes metrics on
-                         a live dashboard
+         └── provisioned by Terraform Modules
+               └── Docker Compose
+                     ├── OpenClaw Container
+                     │     ├── Watches Docker containers
+                     │     ├── Auto-restarts crashed ones
+                     │     ├── Writes logs
+                     │     ├── Exposes metrics
+                     │     └── Sends Slack / Telegram alerts
+                     │
+                     ├── Prometheus Container
+                     │     └── Scrapes and stores metrics
+                     │         from OpenClaw
+                     │
+                     └── Grafana Container
+                           └── Visualizes metrics on
+                               a live dashboard
 ```
 
 ---
@@ -117,6 +120,32 @@ docker-compose.yml
 
 ---
 
+## 🏗️ Terraform Modules Structure
+```
+terraform/
+├── main.tf                    ← calls all modules
+├── variables.tf               ← global input variables
+├── outputs.tf                 ← outputs like EC2 public IP
+├── terraform.tfvars           ← actual variable values
+└── modules/
+      ├── ec2/                 ← EC2 instance module
+      │     ├── main.tf
+      │     ├── variables.tf
+      │     └── outputs.tf
+      │
+      ├── security_group/      ← firewall rules module
+      │     ├── main.tf
+      │     ├── variables.tf
+      │     └── outputs.tf
+      │
+      └── key_pair/            ← SSH key pair module
+            ├── main.tf
+            ├── variables.tf
+            └── outputs.tf
+```
+
+---
+
 ## 📁 Project Structure
 ```
 openclaw/
@@ -129,6 +158,15 @@ openclaw/
 ├── config.yaml                        ← Containers to monitor (Phase 4)
 ├── .gitignore                         ← Git ignore rules
 ├── logs/                              ← Container event logs
+├── terraform/                         ← Infrastructure as Code (Phase 7)
+│     ├── main.tf
+│     ├── variables.tf
+│     ├── outputs.tf
+│     ├── terraform.tfvars
+│     └── modules/
+│           ├── ec2/
+│           ├── security_group/
+│           └── key_pair/
 └── .github/
     └── workflows/
         ├── pipeline.yml               ← Master pipeline (calls all workflows)
@@ -206,6 +244,19 @@ openclaw/
 
 ---
 
+### 🔵 Phase 7 — Terraform Modules (IaC)
+- Provision entire AWS infrastructure using Terraform Modules
+- Each infrastructure component is a separate reusable module
+- Root `main.tf` calls all modules and passes outputs between them
+
+| Module | What it Creates |
+|---|---|
+| `ec2` | t2.micro EC2 instance on AWS free tier |
+| `security_group` | Firewall rules for ports 22, 3000, 9090 |
+| `key_pair` | SSH key pair for EC2 access |
+
+---
+
 ## 🛠️ Tech Stack
 
 | Category | Technology |
@@ -219,6 +270,7 @@ openclaw/
 | Image Registry | DockerHub |
 | CI/CD | GitHub Actions |
 | Alerting | Slack / Telegram |
+| Infrastructure as Code | Terraform Modules |
 | Code Lint | flake8 |
 | SAST | bandit |
 | Secrets Scan | gitleaks |
