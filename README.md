@@ -4,10 +4,11 @@
 
 ### A Self-Healing Docker Container Monitoring Tool
 
-![Python](https://img.shields.io/badge/Python-3.11-blue?style=for-the-badge&logo=python)
+![Python](https://img.shields.io/badge/Python-3.13-blue?style=for-the-badge&logo=python)
 ![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?style=for-the-badge&logo=docker)
 ![Docker Compose](https://img.shields.io/badge/Docker_Compose-Multi--Service-2496ED?style=for-the-badge&logo=docker)
 ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-CI/CD-2088FF?style=for-the-badge&logo=githubactions)
+![Jenkins](https://img.shields.io/badge/Jenkins-Pipeline-D24939?style=for-the-badge&logo=jenkins)
 ![AWS EC2](https://img.shields.io/badge/AWS-EC2-FF9900?style=for-the-badge&logo=amazonaws)
 ![DockerHub](https://img.shields.io/badge/DockerHub-Registry-2496ED?style=for-the-badge&logo=docker)
 ![Prometheus](https://img.shields.io/badge/Prometheus-Metrics-E6522C?style=for-the-badge&logo=prometheus)
@@ -23,26 +24,28 @@
 **OpenClaw** is a self-healing Docker container monitoring tool built with Python.
 It watches your Docker containers 24/7 and automatically restarts them if they stop unexpectedly.
 
-It also logs every event, sends real-time alerts to Slack or Telegram, visualizes metrics using **Prometheus and Grafana**, is secured with a full **DevSecOps CI/CD pipeline** powered by GitHub Actions, and provisions AWS infrastructure using **Terraform Modules**.
+It also logs every event, sends real-time alerts to Slack or Telegram, visualizes metrics using **Prometheus and Grafana**, is secured with a full **DevSecOps CI/CD pipeline** powered by GitHub Actions, provisions AWS infrastructure using **Terraform Modules**, and includes a **Jenkins pipeline** replicating the core CI/CD stages for comparison against GitHub Actions.
 
-> Built as a hands-on DevOps learning project covering monitoring, automation, logging, alerting, metrics visualization, security pipelines, and Infrastructure as Code.
+> Built as a hands-on DevOps learning project covering monitoring, automation, logging, alerting, metrics visualization, security pipelines, Infrastructure as Code, and CI/CD tool comparison.
 
 ---
 
 ## 🎯 Project Goals
 
-- ✅ Monitor Docker containers continuously
+- ✅ Monitor Docker containers continuously via the Docker CLI
 - ✅ Auto-restart stopped or crashed containers
 - ✅ Log all events with timestamps
 - ✅ Support multiple containers via a config file
 - ✅ Send real-time alerts via Slack / Telegram
 - ✅ Visualize container metrics using Prometheus and Grafana
-- ✅ Secure automated CI/CD pipeline with DevSecOps best practices
+- ✅ Secure automated CI/CD pipeline with DevSecOps best practices (GitHub Actions)
 - ✅ Provision AWS infrastructure using Terraform Modules (IaC)
+- ✅ Replicate the pipeline in Jenkins for a GitHub Actions vs Jenkins comparison
 
 ---
 
 ## 🏗️ Architecture
+
 ```
 Your Code (GitHub)
         |
@@ -79,7 +82,8 @@ GitHub Actions Pipeline
 
 ---
 
-## 🔁 CI/CD Pipeline Flow
+## 🔁 CI/CD Pipeline Flow (GitHub Actions)
+
 ```
 Push to GitHub
       |
@@ -102,9 +106,12 @@ pipeline.yml  ← Master Workflow
   └── calls deploy.yml            ← SSH deploy to AWS EC2
 ```
 
+A parallel **Jenkins pipeline** (`Jenkinsfile`) replicates the core stages — lint, build, scan, push, deploy — to compare a self-hosted, plugin-based CI/CD tool against GitHub Actions' cloud-native workflow model.
+
 ---
 
 ## 🐳 Docker Compose Services
+
 ```
 docker-compose.yml
 ├── openclaw       ← Core monitoring + self-healing tool
@@ -118,9 +125,12 @@ docker-compose.yml
 | `prometheus` | Collects and stores OpenClaw metrics | 9090 |
 | `grafana` | Live dashboard for container health metrics | 3000 |
 
+No separate database is used — Prometheus itself is the time-series store for all metrics.
+
 ---
 
 ## 🏗️ Terraform Modules Structure
+
 ```
 terraform/
 ├── main.tf                    ← calls all modules
@@ -147,18 +157,22 @@ terraform/
 ---
 
 ## 📁 Project Structure
+
 ```
 openclaw/
 ├── README.md                          ← Project documentation
 ├── monitor.py                         ← Core monitoring script
 ├── alerts.py                          ← Slack / Telegram alerts
 ├── requirements.txt                   ← Python dependencies
-├── Dockerfile                         ← Single stage Dockerfile
+├── Dockerfile                         ← Single-stage Dockerfile (baseline)
+├── Dockerfile.multistage              ← Multi-stage Dockerfile (optimized, ~72% smaller)
 ├── docker-compose.yml                 ← OpenClaw + Prometheus + Grafana
 ├── config.yaml                        ← Containers to monitor (Phase 4)
-├── .gitignore                         ← Git ignore rules
+├── .env                                ← Secrets (Slack/Telegram tokens, DockerHub creds) — never committed
+├── .gitignore                         ← Git ignore rules (includes .env)
+├── .dockerignore                      ← Excludes unnecessary files from Docker build context
 ├── logs/                              ← Container event logs
-├── terraform/                         ← Infrastructure as Code (Phase 7)
+├── terraform/                         ← Infrastructure as Code (Phase 8)
 │     ├── main.tf
 │     ├── variables.tf
 │     ├── outputs.tf
@@ -167,6 +181,7 @@ openclaw/
 │           ├── ec2/
 │           ├── security_group/
 │           └── key_pair/
+├── Jenkinsfile                        ← Jenkins pipeline (Phase 9)
 └── .github/
     └── workflows/
         ├── pipeline.yml               ← Master pipeline (calls all workflows)
@@ -184,17 +199,27 @@ openclaw/
 
 ## 🚀 Project Phases
 
-### 🔵 Phase 1 — Container Monitoring
+### 🔵 Phase 1 — Container Monitoring ✅
+
 - Use Docker CLI (`docker ps`) to check if containers are running
-- Poll containers on a set interval (every N seconds)
-- Print status to console — running ✅ or stopped ❌
-- **Files:** `monitor.py`, `requirements.txt`, `Dockerfile`, `.gitignore`
+- Package OpenClaw itself into a Docker image
+- Built and compared **three image versions**:
+
+| Version | Approach | Content Size |
+|---|---|---|
+| `v1` | Single-stage, `apt-get install docker.io` | 223MB |
+| `v2` | Multi-stage, `apt-get install docker.io` | 220MB |
+| `v3` | Multi-stage, Docker CLI binary copied directly from official `docker:cli` image | **62MB (~72% smaller)** |
+
+- Image pushed to DockerHub: `docker tag` + `docker push`
+- **Files:** `monitor.py`, `requirements.txt`, `Dockerfile`, `Dockerfile.multistage`, `.dockerignore`, `.gitignore`
 
 ---
 
 ### 🔵 Phase 2 — Auto Restart
+
 - Detect stopped containers from Phase 1
-- Automatically run `docker start <container_name>`
+- Automatically run `docker restart <container_name>`
 - Verify the container came back up successfully
 - Flag containers that fail to restart
 - **Files:** Updates to `monitor.py`
@@ -202,14 +227,16 @@ openclaw/
 ---
 
 ### 🔵 Phase 3 — Logging System
+
 - Log every event (started, stopped, restarted, failed) to a file
 - Include timestamps on every log entry
-- Store logs inside the container, exportable via Docker volumes
+- Store logs via a bind-mounted `logs/` directory so they survive container restarts
 - **Files:** Updates to `monitor.py`, new `logs/` directory
 
 ---
 
 ### 🔵 Phase 4 — Config File
+
 - Move all hardcoded values into `config.yaml`
 - Define which containers to monitor
 - Set check intervals, restart limits, log paths
@@ -219,14 +246,27 @@ openclaw/
 ---
 
 ### 🔵 Phase 5 — Alerts
+
 - Send real-time notifications when containers crash or fail to restart
 - Support Slack webhooks and Telegram bot
 - Alert message includes container name, event type, and timestamp
-- **Files:** Updates to `monitor.py`, new `alerts.py`
+- Secrets (webhook URLs, bot tokens) stored in `.env`, never hardcoded
+- **Files:** Updates to `monitor.py`, new `alerts.py`, `.env`
 
 ---
 
-### 🔵 Phase 6 — DevSecOps CI/CD Pipeline
+### 🔵 Phase 6 — Prometheus + Grafana + Docker Compose
+
+- OpenClaw exposes metrics (container up/down status, restart counts)
+- `docker-compose.yml` runs `openclaw` + `prometheus` + `grafana` together
+- Named volumes (`prometheus-data`, `grafana-data`), bind-mounted `logs/`, custom bridge network
+- Grafana dashboard visualizing container health over time
+- **Files:** `docker-compose.yml`, Prometheus/Grafana config
+
+---
+
+### 🔵 Phase 7 — DevSecOps CI/CD Pipeline (GitHub Actions)
+
 - Full GitHub Actions pipeline with a master workflow calling reusable workflows
 - Each security/lint/build/deploy stage is in its own workflow file
 - Docker Compose deploys all 3 services (OpenClaw + Prometheus + Grafana) to EC2
@@ -244,7 +284,8 @@ openclaw/
 
 ---
 
-### 🔵 Phase 7 — Terraform Modules (IaC)
+### 🔵 Phase 8 — Terraform Modules (IaC)
+
 - Provision entire AWS infrastructure using Terraform Modules
 - Each infrastructure component is a separate reusable module
 - Root `main.tf` calls all modules and passes outputs between them
@@ -257,18 +298,27 @@ openclaw/
 
 ---
 
+### 🔵 Phase 9 — Jenkins Pipeline
+
+- `Jenkinsfile` replicating the core pipeline stages: lint → build → scan → push → deploy
+- Jenkins run via Docker, keeping with the project's Docker-first approach
+- Talking point: GitHub Actions (cloud-native, YAML, tightly integrated with GitHub) vs Jenkins (self-hosted, plugin-based, more configurable)
+- **Files:** `Jenkinsfile`
+
+---
+
 ## 🛠️ Tech Stack
 
 | Category | Technology |
 |---|---|
-| Language | Python 3.11 |
+| Language | Python 3.13 |
 | Containerization | Docker & Docker Desktop |
 | Container Orchestration | Docker Compose |
 | Metrics Collection | Prometheus |
 | Metrics Visualization | Grafana |
 | Cloud | AWS EC2 |
 | Image Registry | DockerHub |
-| CI/CD | GitHub Actions |
+| CI/CD | GitHub Actions, Jenkins |
 | Alerting | Slack / Telegram |
 | Infrastructure as Code | Terraform Modules |
 | Code Lint | flake8 |
