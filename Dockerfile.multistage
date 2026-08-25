@@ -1,0 +1,27 @@
+# ---------- Build stage
+FROM python:3.13-slim AS builder
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN mkdir -p /root/.local && \
+    pip install --no-cache-dir --user -r requirements.txt
+
+
+# ---------- Runtime Stage 
+FROM python:3.13-slim
+
+WORKDIR /app
+
+# Install Docker CLI (needed at runtime to monitor containers)
+RUN apt-get update && \
+    apt-get install -y  docker.io && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy installed Python packages from the builder stage
+COPY --from=builder /root/.local /root/.local
+ENV PATH=/root/.local/bin:$PATH
+
+COPY monitor.py .
+
+CMD ["python", "monitor.py"]
