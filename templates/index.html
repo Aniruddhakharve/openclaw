@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>OpenClaw | Container Monitoring</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, Arial, sans-serif;
+            background: #0b1120;
+            color: #e5e7eb;
+        }
+
+        /* =========================
+           Header
+        ========================= */
+
+        .header {
+            background: #111827;
+            border-bottom: 1px solid #1f2937;
+            padding: 24px 40px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            font-size: 32px;
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 26px;
+            color: #f9fafb;
+        }
+
+        .header p {
+            margin: 6px 0 0 44px;
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        /* =========================
+           Main Container
+        ========================= */
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px 50px;
+        }
+
+        /* =========================
+           Summary Cards
+        ========================= */
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .card {
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            padding: 22px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card h3 {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card-icon {
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #1f2937;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .number {
+            margin-top: 14px;
+            font-size: 34px;
+            font-weight: 700;
+            color: #f9fafb;
+        }
+
+        /* =========================
+           Section
+        ========================= */
+
+        .section {
+            background: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 28px;
+        }
+
+        .section-header {
+            padding: 20px 22px;
+            border-bottom: 1px solid #1f2937;
+        }
+
+        .section-header h2 {
+            margin: 0;
+            font-size: 17px;
+            color: #f9fafb;
+        }
+
+        .section-header p {
+            margin: 5px 0 0;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        /* =========================
+           Table
+        ========================= */
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 850px;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 16px 22px;
+            border-bottom: 1px solid #1f2937;
+            white-space: nowrap;
+        }
+
+        th {
+            background: #0f172a;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        td {
+            font-size: 14px;
+            color: #d1d5db;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:hover {
+            background: #151e2e;
+        }
+
+        .container-name {
+            font-weight: 600;
+            color: #f3f4f6;
+        }
+
+        .image-name {
+            color: #9ca3af;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        /* =========================
+           Status Badges
+        ========================= */
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 5px 9px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .success {
+            background: #052e1a;
+            color: #4ade80;
+        }
+
+        .success .dot {
+            background: #22c55e;
+        }
+
+        .danger {
+            background: #3b0a0a;
+            color: #f87171;
+        }
+
+        .danger .dot {
+            background: #ef4444;
+        }
+
+        .neutral {
+            background: #1f2937;
+            color: #9ca3af;
+        }
+
+        .neutral .dot {
+            background: #6b7280;
+        }
+
+        .warning {
+            background: #3a2505;
+            color: #fbbf24;
+        }
+
+        .warning .dot {
+            background: #f59e0b;
+        }
+
+        /* =========================
+           Recovery Events
+        ========================= */
+
+        .event-success {
+            color: #4ade80;
+            font-weight: 700;
+        }
+
+        .event-failed {
+            color: #f87171;
+            font-weight: 700;
+        }
+
+        .timestamp {
+            color: #9ca3af;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        /* =========================
+           Empty State
+        ========================= */
+
+        .empty {
+            text-align: center;
+            padding: 30px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        /* =========================
+           Footer
+        ========================= */
+
+        .footer {
+            text-align: center;
+            margin-top: 10px;
+            color: #4b5563;
+            font-size: 12px;
+        }
+
+        /* =========================
+           Responsive
+        ========================= */
+
+        @media (max-width: 800px) {
+
+            .header {
+                padding: 20px;
+            }
+
+            .header p {
+                margin-left: 0;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 24px 16px 40px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+
+    <header class="header">
+
+        <div class="brand">
+            <span class="logo">🦞</span>
+            <h1>OpenClaw</h1>
+        </div>
+
+        <p>Container Monitoring &amp; Self-Healing Platform</p>
+
+    </header>
+
+
+    <main class="container">
+
+        <!-- =========================
+             Summary Cards
+        ========================= -->
+
+        <div class="cards">
+
+            <div class="card">
+
+                <div class="card-header">
+                    <h3>Monitored Containers</h3>
+                    <div class="card-icon">◉</div>
+                </div>
+
+                <div class="number">
+                    {{ containers|length }}
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="card-header">
+                    <h3>Running</h3>
+                    <div class="card-icon">✓</div>
+                </div>
+
+                <div class="number">
+                    {{ running_count }}
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="card-header">
+                    <h3>Stopped</h3>
+                    <div class="card-icon">!</div>
+                </div>
+
+                <div class="number">
+                    {{ stopped_count }}
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =========================
+             Container Monitoring
+        ========================= -->
+
+        <section class="section">
+
+            <div class="section-header">
+
+                <h2>Monitored Containers</h2>
+
+                <p>
+                    Live status of Docker containers managed by OpenClaw
+                </p>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>Container</th>
+                            <th>Status</th>
+                            <th>Health</th>
+                            <th>Image</th>
+                            <th>Uptime</th>
+                            <th>Restarts</th>
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for container in containers %}
+
+                        <tr>
+
+                            <!-- Container -->
+
+                            <td>
+                                <span class="container-name">
+                                    {{ container.name }}
+                                </span>
+                            </td>
+
+
+                            <!-- Status -->
+
+                            <td>
+
+                                {% if container.status.startswith("Up") %}
+
+                                <span class="badge success">
+                                    <span class="dot"></span>
+                                    RUNNING
+                                </span>
+
+                                {% else %}
+
+                                <span class="badge danger">
+                                    <span class="dot"></span>
+                                    STOPPED
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- Health -->
+
+                            <td>
+
+                                {% if container.health == "healthy" %}
+
+                                <span class="badge success">
+                                    <span class="dot"></span>
+                                    HEALTHY
+                                </span>
+
+                                {% elif container.health == "unhealthy" %}
+
+                                <span class="badge danger">
+                                    <span class="dot"></span>
+                                    UNHEALTHY
+                                </span>
+
+                                {% elif container.health == "starting" %}
+
+                                <span class="badge warning">
+                                    <span class="dot"></span>
+                                    STARTING
+                                </span>
+
+                                {% else %}
+
+                                <span class="badge neutral">
+                                    <span class="dot"></span>
+                                    NO HEALTHCHECK
+                                </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <!-- Image -->
+
+                            <td>
+                                <span class="image-name">
+                                    {{ container.image }}
+                                </span>
+                            </td>
+
+
+                            <!-- Uptime -->
+
+                            <td>
+                                {{ container.uptime }}
+                            </td>
+
+
+                            <!-- Restart Count -->
+
+                            <td>
+                                {{ container.restart_count }}
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             Recovery Events
+        ========================= -->
+
+        <section class="section">
+
+            <div class="section-header">
+
+                <h2>Recovery Events</h2>
+
+                <p>
+                    Self-healing activity recorded by OpenClaw
+                </p>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>Container</th>
+                            <th>Result</th>
+                            <th>Timestamp</th>
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% if recovery_events %}
+
+                            {% for event in recovery_events %}
+
+                            <tr>
+
+                                <td>
+                                    <span class="container-name">
+                                        {{ event.container }}
+                                    </span>
+                                </td>
+
+
+                                <td>
+
+                                    {% if event.success %}
+
+                                    <span class="event-success">
+                                        ● SUCCESS
+                                    </span>
+
+                                    {% else %}
+
+                                    <span class="event-failed">
+                                        ● FAILED
+                                    </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <td>
+                                    <span class="timestamp">
+                                        {{ event.timestamp }}
+                                    </span>
+                                </td>
+
+                            </tr>
+
+                            {% endfor %}
+
+                        {% else %}
+
+                        <tr>
+                            <td colspan="3" class="empty">
+                                No recovery events recorded.
+                            </td>
+                        </tr>
+
+                        {% endif %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+        <div class="footer">
+            OpenClaw Container Monitoring &amp; Self-Healing
+        </div>
+
+    </main>
+
+</body>
+
+</html>

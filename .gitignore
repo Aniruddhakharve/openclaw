@@ -1,0 +1,9 @@
+# Environment variables / secrets
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+
+# OpenClaw runtime data
+data/

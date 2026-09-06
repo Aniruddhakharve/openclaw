@@ -1,1 +1,2 @@
 # Python dependencies will be added here as we build out OpenClaw
+Flask

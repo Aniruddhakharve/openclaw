@@ -1,0 +1,74 @@
+services:
+
+  openclaw:
+    build:
+      context: .
+      dockerfile: Dockerfile.opt
+    container_name: openclaw
+    ports:
+      - "5000:5000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - openclaw-data:/app/data
+    restart: unless-stopped
+    networks:
+      - openclaw-network
+
+  web:
+    image: nginx:alpine
+    container_name: openclaw-web
+    ports:
+      - "8082:80"
+    labels:
+      io.openclaw.monitor: "true"
+    networks:
+      - openclaw-network
+
+  backend:
+    image: python:3.13-alpine
+    container_name: openclaw-backend
+    command: ["python", "-m", "http.server", "8000"]
+    ports:
+      - "8001:8000"
+    labels:
+      io.openclaw.monitor: "true"
+    networks:
+      - openclaw-network
+    environment:
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_NAME: ${MYSQL_DATABASE}
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+    depends_on:
+      database:
+        condition: service_healthy
+
+  database:
+    image: mariadb:10.11
+    container_name: openclaw-database
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    labels:
+      io.openclaw.monitor: "true"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - openclaw-network
+
+networks:
+  openclaw-network:
+    driver: bridge
+
+volumes:
+  mariadb-data:
+  openclaw-data:
